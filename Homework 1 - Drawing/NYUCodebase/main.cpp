@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
         glDisableVertexAttribArray(texProgram.positionAttribute);
         glDisableVertexAttribArray(texProgram.texCoordAttribute);
         
-        
+        //glClear(GL_COLOR_BUFFER_BIT);
         SDL_GL_SwapWindow(displayWindow);
     }
     

@@ -121,7 +121,7 @@ float GamePiece::getXPos() const {
 //Set Verticies for Piece
 void GamePiece::setVertxs() {
     float inVertxs[12] =
-        {
+    {
         xPos, yPos,
         (xPos + width), yPos,
         (xPos + width),  (yPos - height),
@@ -129,7 +129,7 @@ void GamePiece::setVertxs() {
         xPos, yPos,
         (xPos + width), (yPos - height),
         xPos, (yPos - height)
-        };
+    };
     
     memcpy(vertxs, inVertxs, sizeof(float) * 12);
 }
@@ -139,4 +139,3 @@ void GamePiece::increaseVel() {
     xVel += 0.07f;
     yVel += 0.07f;
 }
-
