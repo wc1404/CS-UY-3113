@@ -11,32 +11,27 @@
 
 #include "ShaderProgram.h"
 #include "Matrix.h"
+#include "FloatVectors.hpp"
 #include <SDL.h>
 #include <SDL_opengl.h>
+#include "Sprite.hpp"
 
 class GamePiece {
 public:
-    GamePiece(float posX, float posY, float theWidth, float theHeight, float velX = 0.0f, float velY = 0.0f);
+    GamePiece(vec3 thePos, vec3 theD, vec3 theVel);
     
-    void Draw(ShaderProgram &program, Matrix &personalMatrix) const;
+    void draw(ShaderProgram &program, Matrix &personalMatrix) const;
     
     bool collision(const GamePiece &opp);
     
-    void move(float nextPosX, float nextPosY);
+    void move(vec3 nextPos);
     
     bool overlap(float otherX, float otherY) const;
     
     float getXPos () const;
     
 private:
-    float xVel;
-    float yVel;
-    
-    float xPos;
-    float yPos;
-    
-    const float width;
-    const float height;
+    vec3 pos, vel, D;
     
     void setVertxs();
     

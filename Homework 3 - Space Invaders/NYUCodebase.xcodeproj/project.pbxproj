@@ -21,7 +21,12 @@
 		6DEF23C21B96CC2600BCE792 /* Matrix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6DEF23BC1B96CC2600BCE792 /* Matrix.cpp */; };
 		6DEF23C31B96CC2600BCE792 /* ShaderProgram.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6DEF23BE1B96CC2600BCE792 /* ShaderProgram.cpp */; };
 		6DEF23C41B96CC2600BCE792 /* vertex.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 6DEF23C01B96CC2600BCE792 /* vertex.glsl */; };
-		E908CABA207D2C0F00328E4F /* GamePiece.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E908CAB9207D2C0F00328E4F /* GamePiece.cpp */; };
+		E90BEA3020802147008FCF0A /* playerShip1_red.png in Resources */ = {isa = PBXBuildFile; fileRef = E90BEA2F20802147008FCF0A /* playerShip1_red.png */; };
+		E90BEA332080341A008FCF0A /* FloatVectors.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E90BEA312080341A008FCF0A /* FloatVectors.cpp */; };
+		E90BEA382085727E008FCF0A /* Sprite.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E90BEA362085727E008FCF0A /* Sprite.cpp */; };
+		E90BEA3B20857392008FCF0A /* Printer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E90BEA3920857392008FCF0A /* Printer.cpp */; };
+		E9417AD9203F39910040A803 /* GamePiece.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E9417AD7203F39910040A803 /* GamePiece.cpp */; };
+		E9F2F8762086A13900D7E7EE /* pixel_font.png in Resources */ = {isa = PBXBuildFile; fileRef = E9F2F8752086A13900D7E7EE /* pixel_font.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -48,8 +53,16 @@
 		6DEF23BE1B96CC2600BCE792 /* ShaderProgram.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ShaderProgram.cpp; sourceTree = "<group>"; };
 		6DEF23BF1B96CC2600BCE792 /* ShaderProgram.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ShaderProgram.h; sourceTree = "<group>"; };
 		6DEF23C01B96CC2600BCE792 /* vertex.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = vertex.glsl; sourceTree = "<group>"; };
-		E908CAB8207D2C0F00328E4F /* GamePiece.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = GamePiece.hpp; sourceTree = "<group>"; };
-		E908CAB9207D2C0F00328E4F /* GamePiece.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GamePiece.cpp; sourceTree = "<group>"; };
+		E90BEA2F20802147008FCF0A /* playerShip1_red.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = playerShip1_red.png; sourceTree = "<group>"; };
+		E90BEA312080341A008FCF0A /* FloatVectors.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = FloatVectors.cpp; sourceTree = "<group>"; };
+		E90BEA322080341A008FCF0A /* FloatVectors.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = FloatVectors.hpp; sourceTree = "<group>"; };
+		E90BEA362085727E008FCF0A /* Sprite.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Sprite.cpp; sourceTree = "<group>"; };
+		E90BEA372085727E008FCF0A /* Sprite.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Sprite.hpp; sourceTree = "<group>"; };
+		E90BEA3920857392008FCF0A /* Printer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Printer.cpp; sourceTree = "<group>"; };
+		E90BEA3A20857392008FCF0A /* Printer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Printer.hpp; sourceTree = "<group>"; };
+		E9417AD7203F39910040A803 /* GamePiece.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GamePiece.cpp; sourceTree = "<group>"; };
+		E9417AD8203F39910040A803 /* GamePiece.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GamePiece.hpp; sourceTree = "<group>"; };
+		E9F2F8752086A13900D7E7EE /* pixel_font.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pixel_font.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -110,6 +123,7 @@
 		6D5A86B319AE5C710066C1FD /* NYUCodebase */ = {
 			isa = PBXGroup;
 			children = (
+				E90BEA2E2080212D008FCF0A /* Images */,
 				6D5A86E119AE5CAA0066C1FD /* Code */,
 				6D5A86B419AE5C710066C1FD /* Supporting Files */,
 			);
@@ -147,19 +161,34 @@
 		6D5A86E119AE5CAA0066C1FD /* Code */ = {
 			isa = PBXGroup;
 			children = (
-				E908CAB9207D2C0F00328E4F /* GamePiece.cpp */,
-				E908CAB8207D2C0F00328E4F /* GamePiece.hpp */,
 				6DEF23BB1B96CC2600BCE792 /* fragment.glsl */,
-				6DEF23C01B96CC2600BCE792 /* vertex.glsl */,
 				6DE9D2F01BA6AB8C002D599C /* fragment_textured.glsl */,
+				6DEF23C01B96CC2600BCE792 /* vertex.glsl */,
 				6DC707691BA7273500225B7D /* vertex_textured.glsl */,
-				6DEF23BC1B96CC2600BCE792 /* Matrix.cpp */,
-				6DEF23BD1B96CC2600BCE792 /* Matrix.h */,
-				6DEF23BE1B96CC2600BCE792 /* ShaderProgram.cpp */,
 				6DEF23BF1B96CC2600BCE792 /* ShaderProgram.h */,
+				6DEF23BE1B96CC2600BCE792 /* ShaderProgram.cpp */,
+				6DEF23BD1B96CC2600BCE792 /* Matrix.h */,
+				6DEF23BC1B96CC2600BCE792 /* Matrix.cpp */,
+				E90BEA322080341A008FCF0A /* FloatVectors.hpp */,
+				E90BEA312080341A008FCF0A /* FloatVectors.cpp */,
+				E90BEA3A20857392008FCF0A /* Printer.hpp */,
+				E90BEA3920857392008FCF0A /* Printer.cpp */,
+				E90BEA372085727E008FCF0A /* Sprite.hpp */,
+				E90BEA362085727E008FCF0A /* Sprite.cpp */,
+				E9417AD8203F39910040A803 /* GamePiece.hpp */,
+				E9417AD7203F39910040A803 /* GamePiece.cpp */,
 				6D5A86B919AE5C710066C1FD /* main.cpp */,
 			);
 			name = Code;
+			sourceTree = "<group>";
+		};
+		E90BEA2E2080212D008FCF0A /* Images */ = {
+			isa = PBXGroup;
+			children = (
+				E9F2F8752086A13900D7E7EE /* pixel_font.png */,
+				E90BEA2F20802147008FCF0A /* playerShip1_red.png */,
+			);
+			name = Images;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -217,9 +246,11 @@
 			files = (
 				6D5A86B819AE5C710066C1FD /* InfoPlist.strings in Resources */,
 				6DEF23C11B96CC2600BCE792 /* fragment.glsl in Resources */,
+				E90BEA3020802147008FCF0A /* playerShip1_red.png in Resources */,
 				6DE9D2F11BA6AB8C002D599C /* fragment_textured.glsl in Resources */,
 				6D5A86C619AE5C710066C1FD /* Images.xcassets in Resources */,
 				6D5A86BE19AE5C710066C1FD /* Credits.rtf in Resources */,
+				E9F2F8762086A13900D7E7EE /* pixel_font.png in Resources */,
 				6DEF23C41B96CC2600BCE792 /* vertex.glsl in Resources */,
 				6DC7076A1BA7273500225B7D /* vertex_textured.glsl in Resources */,
 			);
@@ -234,7 +265,10 @@
 			files = (
 				6DEF23C31B96CC2600BCE792 /* ShaderProgram.cpp in Sources */,
 				6DEF23C21B96CC2600BCE792 /* Matrix.cpp in Sources */,
-				E908CABA207D2C0F00328E4F /* GamePiece.cpp in Sources */,
+				E90BEA382085727E008FCF0A /* Sprite.cpp in Sources */,
+				E90BEA332080341A008FCF0A /* FloatVectors.cpp in Sources */,
+				E90BEA3B20857392008FCF0A /* Printer.cpp in Sources */,
+				E9417AD9203F39910040A803 /* GamePiece.cpp in Sources */,
 				6D5A86BA19AE5C710066C1FD /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

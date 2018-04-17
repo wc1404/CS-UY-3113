@@ -8,40 +8,34 @@
 
 #include "GamePiece.hpp"
 
-GamePiece::GamePiece(float posX, float posY, float theWidth, float theHeight, float velX, float velY): width(theWidth), height(theHeight), xVel(velX), yVel(velY), xPos(posX), yPos(posY) {
+GamePiece::GamePiece(vec3 thePos, vec3 theD, vec3 theVel): pos(thePos), D(theD), vel(theVel) {
     setVertxs();
 }
 
-//Render the Piece
-void GamePiece::Draw(ShaderProgram &program, Matrix &personalMatrix) const {
+//Render the Piece with Textures
+void GamePiece::draw(ShaderProgram &program, Matrix &personalMatrix) const {
     
     personalMatrix.Identity();
-    personalMatrix.Translate(xPos, yPos, 0.0f);
     program.SetModelMatrix(personalMatrix);
     
     glVertexAttribPointer(program.positionAttribute, 2, GL_FLOAT, false, 0, vertxs);
     glEnableVertexAttribArray(program.positionAttribute);
     
     glDrawArrays(GL_TRIANGLES, 0, 6);
-    
-    glDisableVertexAttribArray(program.positionAttribute);
 }
 
 //Collision Logic
 bool GamePiece::collision(const GamePiece &opp) {
-    if ((opp.xPos >= vertxs[0]/2 && opp.xPos <= vertxs[4]/2) && (opp.yPos <= vertxs[1]/2 && opp.yPos >= vertxs[5]/2)) {
+    if ((opp.pos.x >= vertxs[0]/2 && opp.pos.x <= vertxs[4]/2) && (opp.pos.y <= vertxs[1]/2 && opp.pos.y >= vertxs[5]/2)) {
         return true;
     }
     return false;
 }
 
 //Move Pieces
-void GamePiece::move(float nextPosX, float nextPosY) {
+void GamePiece::move(vec3 nexPos) {
     //Horizontal Update
-    xPos = nextPosX;
-    
-    //Vertical Update
-    yPos = nextPosY;
+    pos = nexPos;
     
     //Move Piece
     setVertxs();
@@ -54,25 +48,20 @@ bool GamePiece::overlap(float otherX, float otherY) const {
     return false;
 }
 
-float GamePiece::getXPos () const {
-    return vertxs[0];
-}
-
 //Set Verticies for Piece
 void GamePiece::setVertxs() {
     float inVertxs[12] =
-        {
+    {
         //Top Triangle
-        (xPos - (width/2)), (yPos + (height/2)), //Top Left
-        (xPos + (width/2)), (yPos + (height/2)), //Top Right
-        (xPos + (width/2)),  (yPos - (height/2)), //Bottom Right
+        (pos.x + (D.x/2)), (pos.y + (D.y/2)), //Top Left
+        (pos.x + (D.x/2)), (pos.y + (D.y/2)), //Top Right
+        (pos.x + (D.x/2)), (pos.y - (D.y/2)), //Bottom Right
         
         //Bottom Triangle
-        (xPos - (width/2)), (yPos + (height/2)), //Top Left
-        (xPos + (width/2)), (yPos - (height/2)), //Bottom Right
-        (xPos - (width/2)), (yPos - (height/2)) //Bottom Left
-        };
+        (pos.x - (D.x/2)), (pos.y + (D.y/2)), //Top Left
+        (pos.x + (D.x/2)), (pos.y - (D.y/2)), //Bottom Right
+        (pos.x - (D.x/2)), (pos.y - (D.y/2)) //Bottom Left
+    };
     
     memcpy(vertxs, inVertxs, sizeof(float) * 12);
 }
-
