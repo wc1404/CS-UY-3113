@@ -8,56 +8,64 @@
 
 #include "Sprite.hpp"
 
-Sprite::Sprite(unsigned int textureID, float u, float v, float width, float height, float theSize): pos(u,v), dimen(width, height), size(theSize) {}
+Sprite::Sprite() {}
 
-void Sprite::drawSprite(ShaderProgram &program, Matrix personalMatrix) {
+Sprite::Sprite(unsigned int textureID, float u, float v, float width, float height, float theSize): spriteTex(textureID), u(u), v(v), width(width), height(height), size(theSize) { setVertxs(); }
+
+Sprite::Sprite(unsigned int textureID, vec3 texPos, vec3 texDimen, float theSize):spriteTex(textureID), u(texPos.x), v(texPos.y), width(texDimen.x), height(texDimen.y), size(theSize) { setVertxs(); }
+
+void Sprite::draw(ShaderProgram* program) const {
     
-    personalMatrix.Identity();
-    program.SetModelMatrix(personalMatrix);
+    glBindTexture(GL_TEXTURE_2D, spriteTex);
     
-    glBindTexture(GL_TEXTURE_2D, textureID);
+    glVertexAttribPointer(program->positionAttribute, 2, GL_FLOAT, false, 0, vertices);
+    glEnableVertexAttribArray(program->positionAttribute);
     
-    glVertexAttribPointer(program.positionAttribute, 2, GL_FLOAT, false, 0, vertxs);
-    glEnableVertexAttribArray(program.positionAttribute);
-    
-    glVertexAttribPointer(program.texCoordAttribute, 2, GL_FLOAT, false, 0, texCoords);
-    glEnableVertexAttribArray(program.texCoordAttribute);
+    glVertexAttribPointer(program->texCoordAttribute, 2, GL_FLOAT, false, 0, texCoords);
+    glEnableVertexAttribArray(program->texCoordAttribute);
     
     glDrawArrays(GL_TRIANGLES, 0, 6);
     
-    glDisableVertexAttribArray(program.positionAttribute);
-    glDisableVertexAttribArray(program.texCoordAttribute);
-    
+    glDisableVertexAttribArray(program->positionAttribute);
+    glDisableVertexAttribArray(program->texCoordAttribute);
+}
+
+vec3 Sprite::getDimen() const {
+    return trueDimen;
 }
 
 void Sprite::setVertxs() {
     
-    float aspect = dimen.x / dimen.y;
-    
-    float vertices[] = {
-        -0.5f * size * aspect, -0.5f * size,
-        0.5f * size * aspect, 0.5f * size,
-        -0.5f * size * aspect, 0.5f * size,
-        
-        0.5f * size * aspect, 0.5f * size,
-        -0.5f * size * aspect, -0.5f * size ,
-        0.5f * size * aspect, -0.5f * size
+    GLfloat textCoords[] = {
+        u, v + height,
+        u + width, v,
+        u, v,
+        u + width, v,
+        u, v + height,
+        u + width, v + height
     };
     
-    memcpy(vertices, vertxs, sizeof(float) * 12);
-}
-
-void Sprite::setTexCoords() {
+    float aspect = width / height;
     
-    GLfloat rawTexCoords[] = {
-        pos.x, (pos.y + dimen.y),
-        (pos.x + dimen.x), pos.y,
-        pos.x, pos.y,
+    float vertxs[] = {
+        -0.5f * size * aspect, -0.5f * size, //Bottom Left
+         0.5f * size * aspect,  0.5f * size, //Top Right
+        -0.5f * size * aspect,  0.5f * size, //Top Left
         
-        (pos.x + dimen.x), pos.y,
-        pos.x, (pos.y + dimen.y),
-        (pos.x + dimen.x), (pos.y + dimen.y)
+         0.5f * size * aspect,  0.5f * size, //Top Right
+        -0.5f * size * aspect, -0.5f * size, //Bottom Left
+         0.5f * size * aspect, -0.5f * size  //Bottom Right
     };
     
-    memcpy(texCoords, rawTexCoords, sizeof(float) * 12);
+    for(int i = 0; i < 12; i++) {
+        vertices[i] = vertxs[i];
+    }
+    
+    //set height and width
+    trueDimen.x = fabs(vertices[0] * 2);
+    trueDimen.y = fabs(vertices[1] * 2);
+    
+    for(int i = 0; i < 12; i++) {
+        texCoords[i] = textCoords[i];
+    }
 }

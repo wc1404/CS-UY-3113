@@ -19,6 +19,8 @@ public:
     
     vec3& operator=(const vec3 &other);
     
+    bool operator==(const vec3 &other);
+    
     float x;
     float y;
     float z;

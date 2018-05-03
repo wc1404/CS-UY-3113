@@ -10,6 +10,12 @@
 
 vec3::vec3(float X, float Y, float Z): x(X), y(Y), z(Z) {}
 
+vec3::vec3(const vec3 &other) {
+    x = other.x;
+    y = other.y;
+    z = other.z;
+}
+
 vec3& vec3::operator=(const vec3 &other) {
     x = other.x;
     y = other.y;
@@ -17,8 +23,11 @@ vec3& vec3::operator=(const vec3 &other) {
     return *this;
 }
 
-vec3::vec3(const vec3 &other) {
-    x = other.x;
-    y = other.y;
-    z = other.z;
+bool vec3::operator==(const vec3 &other) {
+    if ((x == other.x) && (z == other.z) && (z == other.z)){
+        return true;
+    }
+    return false;
 }
+
+

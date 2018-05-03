@@ -10,27 +10,43 @@
 #define Sprite_hpp
 
 #include <stdio.h>
+#include <math.h>
 #include "ShaderProgram.h"
 #include "FloatVectors.hpp"
+#include "Matrix.h"
 
 class Sprite {
 public:
-    Sprite(unsigned int textureID, float u, float v, float width, float height, float size);
+    Sprite();
     
-    void drawSprite(ShaderProgram &program, Matrix personalMatrix);
+    Sprite(unsigned int textureID, float u, float v, float width, float height, float theSize);
+    
+    Sprite(unsigned int textureID, vec3 texPos, vec3 texDimen, float theSize);
+    
+    void draw(ShaderProgram *program) const;
+    
+    //Pass in/calculate true width/height in sprite
+    vec3 getDimen() const;
     
 private:
-    vec3 pos, dimen;
+    unsigned int spriteTex;
     
-    float size;
-    unsigned int textureID;
+    Matrix personalMatrix;
+    
+    float u;
+    float v;
+    
+    float width;
+    float height;
     
     float texCoords[12];
-    float vertxs[12];
+    float vertices[12];
+    
+    float size;
+    vec3 trueDimen;
     
     void setVertxs();
-    void setTexCoords();
-
+    
 };
 
 #endif /* Sprite_hpp */

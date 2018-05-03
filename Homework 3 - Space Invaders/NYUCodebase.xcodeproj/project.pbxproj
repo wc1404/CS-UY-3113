@@ -21,12 +21,12 @@
 		6DEF23C21B96CC2600BCE792 /* Matrix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6DEF23BC1B96CC2600BCE792 /* Matrix.cpp */; };
 		6DEF23C31B96CC2600BCE792 /* ShaderProgram.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6DEF23BE1B96CC2600BCE792 /* ShaderProgram.cpp */; };
 		6DEF23C41B96CC2600BCE792 /* vertex.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 6DEF23C01B96CC2600BCE792 /* vertex.glsl */; };
-		E90BEA3020802147008FCF0A /* playerShip1_red.png in Resources */ = {isa = PBXBuildFile; fileRef = E90BEA2F20802147008FCF0A /* playerShip1_red.png */; };
 		E90BEA332080341A008FCF0A /* FloatVectors.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E90BEA312080341A008FCF0A /* FloatVectors.cpp */; };
 		E90BEA382085727E008FCF0A /* Sprite.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E90BEA362085727E008FCF0A /* Sprite.cpp */; };
 		E90BEA3B20857392008FCF0A /* Printer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E90BEA3920857392008FCF0A /* Printer.cpp */; };
 		E9417AD9203F39910040A803 /* GamePiece.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E9417AD7203F39910040A803 /* GamePiece.cpp */; };
 		E9F2F8762086A13900D7E7EE /* pixel_font.png in Resources */ = {isa = PBXBuildFile; fileRef = E9F2F8752086A13900D7E7EE /* pixel_font.png */; };
+		E9F2F8782089181000D7E7EE /* sheet.png in Resources */ = {isa = PBXBuildFile; fileRef = E9F2F8772089181000D7E7EE /* sheet.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -53,7 +53,6 @@
 		6DEF23BE1B96CC2600BCE792 /* ShaderProgram.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ShaderProgram.cpp; sourceTree = "<group>"; };
 		6DEF23BF1B96CC2600BCE792 /* ShaderProgram.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ShaderProgram.h; sourceTree = "<group>"; };
 		6DEF23C01B96CC2600BCE792 /* vertex.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = vertex.glsl; sourceTree = "<group>"; };
-		E90BEA2F20802147008FCF0A /* playerShip1_red.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = playerShip1_red.png; sourceTree = "<group>"; };
 		E90BEA312080341A008FCF0A /* FloatVectors.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = FloatVectors.cpp; sourceTree = "<group>"; };
 		E90BEA322080341A008FCF0A /* FloatVectors.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = FloatVectors.hpp; sourceTree = "<group>"; };
 		E90BEA362085727E008FCF0A /* Sprite.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Sprite.cpp; sourceTree = "<group>"; };
@@ -63,6 +62,7 @@
 		E9417AD7203F39910040A803 /* GamePiece.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GamePiece.cpp; sourceTree = "<group>"; };
 		E9417AD8203F39910040A803 /* GamePiece.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GamePiece.hpp; sourceTree = "<group>"; };
 		E9F2F8752086A13900D7E7EE /* pixel_font.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pixel_font.png; sourceTree = "<group>"; };
+		E9F2F8772089181000D7E7EE /* sheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = sheet.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -185,8 +185,8 @@
 		E90BEA2E2080212D008FCF0A /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				E9F2F8772089181000D7E7EE /* sheet.png */,
 				E9F2F8752086A13900D7E7EE /* pixel_font.png */,
-				E90BEA2F20802147008FCF0A /* playerShip1_red.png */,
 			);
 			name = Images;
 			sourceTree = "<group>";
@@ -245,8 +245,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				6D5A86B819AE5C710066C1FD /* InfoPlist.strings in Resources */,
+				E9F2F8782089181000D7E7EE /* sheet.png in Resources */,
 				6DEF23C11B96CC2600BCE792 /* fragment.glsl in Resources */,
-				E90BEA3020802147008FCF0A /* playerShip1_red.png in Resources */,
 				6DE9D2F11BA6AB8C002D599C /* fragment_textured.glsl in Resources */,
 				6D5A86C619AE5C710066C1FD /* Images.xcassets in Resources */,
 				6D5A86BE19AE5C710066C1FD /* Credits.rtf in Resources */,

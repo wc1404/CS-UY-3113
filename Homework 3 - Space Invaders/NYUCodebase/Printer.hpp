@@ -13,18 +13,20 @@
 #include "ShaderProgram.h"
 #include "FloatVectors.hpp"
 #include <vector>
+#include "Matrix.h"
 
 class Printer {
 public:
-    Printer(unsigned int theFontTex, vec3 printDimen, vec3 textDimen, float theSize, float theSpacing);
+    Printer(unsigned int theFontTex, vec3 textDimen, float theSize, float theSpacing);
     
-    void print(ShaderProgram &program, vec3 pos, const std::string text = "Default Text");
+    void print(ShaderProgram* program, Matrix &modelMatrix, const std::string text = "Default Text", const vec3* const pos = nullptr, const vec3* const scale = nullptr, const int rot = 0);
     
 private:
-    vec3 texDimen, dimen;
+    vec3 texDimen;
     
     float size;
     float texture_size;
+    bool center;
     
     float spacing;
     unsigned int fontTex;

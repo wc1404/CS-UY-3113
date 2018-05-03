@@ -18,24 +18,37 @@
 
 class GamePiece {
 public:
-    GamePiece(vec3 thePos, vec3 theD, vec3 theVel);
+    GamePiece(const Sprite* const theSkin, vec3 thePos, vec3 theVel, int livesAmt = 1);
     
     void draw(ShaderProgram &program, Matrix &personalMatrix) const;
     
-    bool collision(const GamePiece &opp);
+    bool collision(GamePiece &opp, bool harmless = false);
     
-    void move(vec3 nextPos);
+    bool inBounds(const vec3 &bound);
     
-    bool overlap(float otherX, float otherY) const;
+    void move(float elapsed);
     
-    float getXPos () const;
+    void shoot(bool didShoot = true);
+    
+    bool inquiryShot() const;
+    
+    void affectV(const std::string &axis, float affect);
+    
+    int lifeForce(int affectLife = 0);
+    
+    vec3 getPos() const;
+    
+    void reset();
     
 private:
-    vec3 pos, vel, D;
+    vec3 pos, originalPos, vel, D;
     
-    void setVertxs();
+    const Sprite* const skin;
     
-    float vertxs[12];
+    bool shot = false;
+    
+    int lives, originalLives;
+    bool dead = false;
 };
 
 #endif /* GamePiece_hpp */
