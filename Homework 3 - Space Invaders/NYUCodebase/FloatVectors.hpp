@@ -13,7 +13,8 @@
 
 class vec3 {
 public:
-    vec3(float x = 0.0f, float y = 0.0f, float z = 0.0f);
+    
+    vec3(float X = 0.0f, float Y = 0.0f, float Z = 0.0f);
     
     vec3(const vec3 &other);
     

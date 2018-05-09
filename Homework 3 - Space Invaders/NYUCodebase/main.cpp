@@ -21,6 +21,7 @@
 #include "Sprite.hpp"
 #include "GamePiece.hpp"
 #include <vector>
+#include <SDL_mixer.h>
 
 // 60 FPS (1.0f/60.0f) (update sixty times a second)
 #define FIXED_TIMESTEP 0.0166666f
@@ -28,6 +29,10 @@
 
 SDL_Window* displayWindow;
 
+//Game States
+enum GameMode {MENU, LEVEL, GAME_OVER};
+
+//Texture Loader
 GLuint LoadTexture(const char *filePath) {
     int w,h,comp;
     unsigned char* image = stbi_load(filePath, &w, &h, &comp, STBI_rgb_alpha);
@@ -47,8 +52,9 @@ GLuint LoadTexture(const char *filePath) {
     return retTexture;
 }
 
+//Setup for the screen and Shader Program
 void setUp(ShaderProgram &program, Matrix &projectionMatrix, const vec3 &bound, int scaleFactor = 1) {
-    SDL_Init(SDL_INIT_VIDEO);
+    SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO);
     displayWindow = SDL_CreateWindow("El Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, bound.x, bound.y, SDL_WINDOW_OPENGL);
     SDL_GLContext context = SDL_GL_CreateContext(displayWindow);
     SDL_GL_MakeCurrent(displayWindow, context);
@@ -65,113 +71,324 @@ void setUp(ShaderProgram &program, Matrix &projectionMatrix, const vec3 &bound, 
     projectionMatrix.SetOrthoProjection((-bound.x/bound.y)*scaleFactor, (bound.x/bound.y)*scaleFactor, (-bound.x/bound.y)*scaleFactor, (bound.x/bound.y)*scaleFactor, -1.0f, 1.0f);
 }
 
-void update(float time, int &score, const vec3 &bound, GamePiece &player, std::vector<GamePiece> &bullets, std::vector<std::vector<GamePiece>> &enemies) {
+//Resets the board
+void resetBoard(std::vector<GamePiece> &bullets, GamePiece &player, GamePiece &UFO, std::vector<std::vector<GamePiece>> &enemies, int &enemyAmount, int &score) {
+    
+    UFO.reset();
+    
+    //Reset All Bullets
+    for (int i = 0; i < bullets.size(); i++) {
+        bullets[i].reset();
+    }
+    
+    //if the player died then reset the player and score, if not then add a life to the player and reset the enemy amount
+    if (player.dead) {
+        player.reset();
+    } else {
+        player.lives += 1;
+        enemyAmount = 60;
+    }
+    
+    //Reset all enemies
+    for (int i = 0; i < enemies.size(); i++) {
+        for (int j = 0; j < enemies[i].size(); j++) {
+            enemies[i][j].reset();
+        }
+    }
+    
+}
+
+//Updates GamePieces when in Play
+void updateBoard(float time, int &score, std::vector<GamePiece> &bullets, GamePiece &player, GamePiece &UFO, std::vector<std::vector<GamePiece>> &enemies, int &enemyAmount, std::vector<Mix_Chunk*> sounds) {
+    
     //------Scan for Player Movement------//
     const Uint8* keys = SDL_GetKeyboardState(NULL);
     
-    vec3 normalizedBounds( (((bound.x/bound.y)*8) - 0.01), (((bound.x/bound.y)*8) - 0.01) );
-    
-    bool playerValid = player.inBounds(normalizedBounds);
-    
-    if (playerValid) {
-        if (keys[SDL_SCANCODE_LEFT]){
-            player.move(-time);
-            bullets[1].move(-time);
-        }
-        
-        if (keys[SDL_SCANCODE_RIGHT]){
+    //Move Player Right
+    if (keys[SDL_SCANCODE_RIGHT]) {
+        if (player.pos.x >= 8 - (player.D.x/2)) {
+            player.pos.x = 8 - (player.D.x/2);
+        } else {
             player.move(time);
-            bullets[1].move(time);
-        }
-        
-        if (keys[SDL_SCANCODE_SPACE]) {
-            player.shoot();
-            
-        } else if (player.inquiryShot()) {
-            
-            if (bullets[1].inBounds(normalizedBounds)) {
-                bullets[1].move(time);
-            } else {
-                player.shoot(false);
-                bullets[1].reset();
-            }
-            
         }
     }
     
+    //Move player Left
+    if (keys[SDL_SCANCODE_LEFT]) {
+        if (player.pos.x <= -8 + player.D.x/2) {
+            player.pos.x = -8 + player.D.x/2;
+        } else {
+            player.move(-time);
+        }
+    }
+    
+    //If the player shot the bullet then move the bullet
+    if (!bullets[0].dead) {
+        bool playerBulletInBounds = (bullets[0].pos.y - bullets[0].D.y/2) > -8 && (bullets[0].pos.y + bullets[0].D.y/2) < 8;
+        if (playerBulletInBounds) {
+            bullets[0].move(time);
+            
+        } else {
+            bullets[0].dead = true;
+        }
+    }
+    
+    //If all the enemies are killed then reset the game
+    if (enemyAmount == 0) {
+        resetBoard(bullets, player, UFO, enemies, enemyAmount, score);
+    }
+    
+    //-------------UFO Update Logic
+    
+    //Generate random numbers to randomize UFO appearance
+    int launchUFO = rand() % 800;
+    int target = rand() % 400;
+    
+    //Random number reached a random target then launch the UFO
+    if (launchUFO == target && UFO.dead) {
+        UFO.dead = false;
+    }
+    
+    //If the UFO is not dead then move within bounds
+    if (!UFO.dead) {
+        bool UFOInBounds = (UFO.pos.x - UFO.D.x/2) > -8 && (UFO.pos.x + UFO.D.x/2) < 8;
+
+        if (UFOInBounds) {
+            UFO.move(-time);
+            Mix_PlayChannel(-1, sounds[3], 0);
+            
+        } else { //If UFO moves offscreen then kill it
+            UFO.dead = true;
+            UFO.reset();
+        }
+        
+        //if the player bullet has hit the UFO then update score, play sound and kill both
+        if (bullets[0].collision(UFO)) {
+            bullets[0].dead = true;
+            UFO.dead = true;
+            score += 50;
+            Mix_PlayChannel(-1, sounds[1], 0);
+        }
+
+    }
+    
+    //-------------Enemy Update Logic
     for (int i = 0; i < enemies.size(); i++) {
         for (int j = 0; j < enemies[i].size(); j++) {
             
-            bool enemyValid = enemies[i][j].inBounds(normalizedBounds);
-            
-            if (enemyValid) {
-                enemies[i][j].move(time);
-            } else {
-                enemies[i][j].affectV("x", 0);
-            }
-            
-            if (player.inquiryShot()) {
-                std::cout << bullets[1].collision(enemies[i][j]) << std::endl;
+            if (!enemies[i][j].dead) {
+                
+                //Check if the enemies are within the screen bounds
+                if ((enemies[i][j].pos.x < -8 + (enemies[i][j].D.x/2)) || (enemies[i][j].pos.x > 8 - (enemies[i][j].D.x/2))) {
+                    float penetration;
+                    
+                    //Find if there is another enemy that has penetrated the screen further than the one caught first and set penetration according to it
+                    for (int k = 0; k < enemies[i].size(); k++) {
+                        if (enemies[i][j].vel.x > 0) {
+                            if (enemies[i][k].pos.x + enemies[i][k].D.x/2 > enemies[i][j].pos.x + enemies[i][j].D.x/2) {
+                                j = k;
+                            }
+                        } else {
+                            if (enemies[i][k].pos.x - enemies[i][k].D.x/2 < enemies[i][j].pos.x - enemies[i][j].D.x/2) {
+                                j = k;
+                            }
+                        }
+                        
+                    }
+                    
+                    //Adjust the enemies into their positions
+                    if (enemies[i][j].vel.x > 0) {
+                        penetration = (enemies[i][j].pos.x + enemies[i][j].D.x/2) - 8;
+                    } else {
+                        penetration = -(enemies[i][j].pos.x - enemies[i][j].D.x/2) - 8;
+                    }
+                    
+                    //enemy is out of bounds shift and reverse all enemies as well as move them down and increase the vel slightly
+                    for (int i = 0; i < enemies.size(); i++) {
+                        for (int j = 0; j < enemies[i].size(); j++) {
+                            
+                            if (enemies[i][j].vel.x > 0) {
+                                enemies[i][j].pos.x -= (penetration);
+                                enemies[i][j].vel.x = -(enemies[i][j].vel.x + 0.12);
+                                
+                            } else if (enemies[i][j].vel.x < 0) {
+                                enemies[i][j].pos.x += (penetration);
+                                enemies[i][j].vel.x = -(enemies[i][j].vel.x - 0.12);
+                            }
+                            
+                            enemies[i][j].pos.y = enemies[i][j].pos.y - 0.05;
+                        
+                        }
+                    }
+                    
+                } else { //If enemies are in screen move them
+                    enemies[i][j].move(time);
+                    
+                    //if the players bullet has collided with an enemy kill both and make hit sound
+                    if (bullets[0].collision(enemies[i][j])) {
+                        bullets[0].dead = true;
+                        enemies[i][j].dead = true;
+                        score += 10;
+                        enemyAmount -= 1;
+                        
+                        Mix_PlayChannel(-1, sounds[1], 0);
+                    }
+                    
+                    //Generate random number to randoize shots
+                    int shootBack = rand() % 500;
+                    
+                    //if the bullet can be shot and the random number hits this random target then shoot with a sound
+                    if (shootBack == target && bullets[1].dead){
+                        bullets[1].dead = false;
+                        bullets[1].pos.x = enemies[i][j].pos.x;
+                        bullets[1].pos.y = (enemies[i][j].pos.y - enemies[i][j].D.y);
+                        
+                        Mix_PlayChannel(-1, sounds[0], 0);
+                        
+                    }
+                    
+                    //if the enemy has reached the player then the game is over
+                    if ((enemies[i][j].pos.y < (player.pos.y + player.D.y)) && (!enemies[i][j].dead)) {
+                        player.dead = true;
+                    }
+                    
+                }
+                
             }
             
         }
     }
     
+    //if the enemy shot a bullet then move the bullet and check for collision with player
+    if (!bullets[1].dead) {
+        bool enemyBulletInBounds = (bullets[1].pos.y - bullets[1].D.y/2) > -8 && (bullets[1].pos.y + bullets[1].D.y/2) < 8;
+        
+        //if the bullet is in the screen then move it, if not kill it
+        if (enemyBulletInBounds) {
+            bullets[1].move(time);
+            
+            //if the bullet collides then kill the bullet and the players lives are reduced and play a hit sound
+            if (bullets[1].collision(player)) {
+                bullets[1].dead = true;
+                player.lives -= 1;
+                Mix_PlayChannel(-1, sounds[2], 0);
+                
+                if (!player.lives) {
+                    player.dead = true;
+                }
+            }
+
+        } else {
+            bullets[1].dead = true;
+        }
+    }
+    
 }
 
-void processEvents(SDL_Event &event, bool &done, bool &title) {
+void processEvents(SDL_Event &event, bool &done, int &score, GameMode &mode, GamePiece &player, std::vector<GamePiece> &bullets, const std::vector<Mix_Chunk*> &sounds) {
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_QUIT || event.type == SDL_WINDOWEVENT_CLOSE) {
             done = true;
-        } else if (event.key.keysym.scancode == SDL_SCANCODE_SPACE) {
-            title = false;
+            
+        //if space is pressed and you are in the Game and the bullet can be shot then shoot a bullet and play a shot sound
+        } else if (event.key.keysym.scancode == SDL_SCANCODE_SPACE && bullets[0].dead && mode == LEVEL) {
+            bullets[0].dead = false;
+            bullets[0].pos.x = player.pos.x;
+            bullets[0].pos.y = (player.pos.y + player.D.y);
+            Mix_PlayChannel(-1, sounds[0], 0);
+        
+        //if Space is pressed and the game is over or you are at the menu, then reset and go back to the game fresh
+        } else if (event.key.keysym.scancode == SDL_SCANCODE_SPACE && (mode == MENU || mode == GAME_OVER)) {
+            mode = LEVEL;
+            player.reset();
+            score = 0;
         }
     }
+    
+    if (player.dead) {
+        mode = GAME_OVER;
+    }
+    
 }
 
-void render(ShaderProgram &program, std::vector<Matrix*> &matricies, int &score, bool title, GamePiece &player, const std::vector<GamePiece> &lives, GamePiece &UFO, std::vector<GamePiece> &bullets, const std::vector<std::vector<GamePiece>> &enemies, std::vector<Printer*> &printers, const std::vector<vec3*> &printerPos) {
-    
+//Render Game Screen
+void renderGame(ShaderProgram &program, std::vector<Matrix*> &matricies, int &score, std::vector<GamePiece> &bullets, GamePiece &player, const std::vector<GamePiece> &lives, GamePiece &UFO,  const std::vector<std::vector<GamePiece>> &enemies, std::vector<Printer*> &printers, const std::vector<vec3*> &printerPos) {
     glClear(GL_COLOR_BUFFER_BIT);
     
     program.SetProjectionMatrix(*matricies[0]);
     program.SetViewMatrix(*matricies[1]);
     
-    if (title) {
-        printers[0]->print(&program, *matricies[2], "Space Invaders", printerPos[0]);
-        
-        printers[1]->print(&program, *matricies[2], "Press Space to Fight!", printerPos[1]);
-        
-    } else {
-        printers[2]->print(&program, *matricies[2], std::to_string(score), printerPos[2]);
-        
-        player.draw(program, *matricies[2]);
-        
-        
-        for (int i = 0; i < player.lifeForce(); i++) {
-            lives[i].draw(program, *matricies[2]);
-        }
-        
-        UFO.draw(program, *matricies[2]);
-        
-        for (int i = 0; i < enemies.size(); i++) {
-            for (int j = 0; j < enemies[i].size(); j++) {
-                enemies[i][j].draw(program, *matricies[2]);
-            }
-        }
-        
-        if (player.inquiryShot()) {
-            bullets[1].draw(program, *matricies[2]);
-        }
-        
+    //Print Score
+    printers[2]->print(&program, *matricies[2], std::to_string(score), printerPos[2]);
+    
+    //Rener player
+    player.draw(program, *matricies[2]);
+    
+    //Render Bullets
+    bullets[0].draw(program, *matricies[2]);
+    bullets[1].draw(program, *matricies[2]);
+    
+    //Render Player Lives
+    for (int i = 0; i < player.lives; i++) {
+        lives[i].draw(program, *matricies[2]);
     }
+    
+    UFO.draw(program, *matricies[2]);
+    
+    //Render Enemies
+    for (int i = 0; i < enemies.size(); i++) {
+        for (int j = 0; j < enemies[i].size(); j++) {
+            enemies[i][j].draw(program, *matricies[2]);
+        }
+    }
+    
+}
+
+//Render Game Over Screen
+void renderGameOver(ShaderProgram &program, std::vector<Matrix*> &matricies, int &score, GamePiece &player, std::vector<Printer*> &printers) {
+    glClear(GL_COLOR_BUFFER_BIT);
+    
+    program.SetProjectionMatrix(*matricies[0]);
+    program.SetViewMatrix(*matricies[1]);
+    
+    vec3 gameOverPos(-3.0f, 3.0f);
+    vec3 finalScorePos(-3.4f, -0.8f);
+    vec3 menuPos(-4.0f, -4.0f);
+    
+    //Print Game over Status
+    printers[0]->print(&program, *matricies[2], "GAME OVER", &gameOverPos);
+    
+    //Print Ressurecton Menu
+    printers[1]->print(&program, *matricies[2], "Press [Space] to Rise Again!", &menuPos);
+    
+    //Print Final Score
+    printers[2]->print(&program, *matricies[2], "Final Score: " + std::to_string(score), &finalScorePos);
+    
+    player.dead = false;
+    player.draw(program, *matricies[2]);
+    player.dead = true;
+    
+}
+
+void renderTitle(ShaderProgram &program, std::vector<Matrix*> &matricies, std::vector<Printer*> &printers, const std::vector<vec3*> &printerPos) {
+    glClear(GL_COLOR_BUFFER_BIT);
+    
+    program.SetProjectionMatrix(*matricies[0]);
+    program.SetViewMatrix(*matricies[1]);
+    
+    //Print Title
+    printers[0]->print(&program, *matricies[2], "Space Invaders", printerPos[0]);
+    
+    //Print Menu Item
+    printers[1]->print(&program, *matricies[2], "Press [Space] to Fight!", printerPos[1]);
+    
 }
 
 int main(int argc, char *argv[]) {
     //----------------Shader Programs----------------//
     ShaderProgram program;
     
-    
-    //----------MATRICIES----------------//
+    //----------------MATRICIES----------------//
     Matrix projectionMatrix, viewMatrix, modelMatrix;
     std::vector<Matrix*> matricies { &projectionMatrix, &viewMatrix, &modelMatrix };
     
@@ -179,13 +396,13 @@ int main(int argc, char *argv[]) {
     vec3 bounds(720, 720);
     setUp(program, projectionMatrix, bounds, 8);
     
+    //Zero Vectors
     vec3 zeroPos;
     vec3 zeroVel;
     
     //----------------TEXTURES----------------//
     GLuint fontTex = LoadTexture(RESOURCE_FOLDER"pixel_font.png");
     GLuint spriteSheetTexture = LoadTexture(RESOURCE_FOLDER"sheet.png");
-    
     
     //----------------PRINTERS----------------//
     vec3 textDimen(16.0f, 16.0f);
@@ -195,7 +412,7 @@ int main(int argc, char *argv[]) {
     Printer scorePrinter(fontTex, textDimen, 0.5, 0.00001f);
     
     vec3 titlePos(-4.3f, 3.0f);
-    vec3 menuPos(-3.0f);
+    vec3 menuPos(-3.2f);
     vec3 scorePos(-7.6f, 7.6f);
     
     std::vector<Printer*> printers { &titlePrinter, &menuPrinter, &scorePrinter };
@@ -203,12 +420,34 @@ int main(int argc, char *argv[]) {
     
     //----------------SPRITES----------------//
     
-    //Enemies
+    //-----Player
+    vec3 playerPos(0.0f, -6.5f);
+    vec3 playerVel(8.0f);
+    Sprite playerShipSkin(spriteSheetTexture, 224.0f/1024.0f, 832.0f/1024.0f, 99.0f/1024.0f, 75.0f/1024.0f, 1.0);
+    GamePiece playerShip(&playerShipSkin, playerPos, playerVel, 3);
+    
+    //-----PlayerLives
+    vec3 livesPos(7.6f, 7.65f);
+    Sprite playerLivesSkin(spriteSheetTexture, 775.0f/1024.0f, 301.0f/1024.0f, 33.0f/1024.0f, 26.0f/1024.0f, 0.5);
+    
+    std::vector<GamePiece> lives;
+    
+    int originalLives = playerShip.lives;
+    
+    for (int i = 0; i < playerShip.lives; i++) {
+        GamePiece playerLives(&playerLivesSkin, livesPos, zeroVel);
+        lives.push_back(playerLives);
+        livesPos.x -= 0.65;
+    }
+    
+    livesPos.x = 7.6f;
+    
+    //----Enemies
     vec3 enemyPos(-5.0f, -1.0f);
     vec3 enemyVel(2.0f);
-    vec3 enemyPosUFO(0.0f, 5.5f);
+    vec3 enemyPosUFO(7.5f, 5.5f);
     Sprite enemyShipUFOSkin(spriteSheetTexture, 505.0f/1024.0f, 898.0f/1024.0f, 91.0f/1024.0f, 91.0f/1024.0f, 0.8);
-    GamePiece enemyShipUFO(&enemyShipUFOSkin, enemyPosUFO, enemyVel);
+    GamePiece enemyShipUFO(&enemyShipUFOSkin, enemyPosUFO, enemyVel, 0);
     
     Sprite enemyShipBlueSkin1(spriteSheetTexture, 425.0f/1024.0f, 468.0f/1024.0f, 92.7f/1024.0f, 84.0f/1024.0f, 0.8);
     Sprite enemyShipBlueSkin2(spriteSheetTexture, 222.5f/1024.0f, 0.0f/1024.0f, 102.4f/1024.0f, 84.0f/1024.0f, 0.8);
@@ -216,114 +455,83 @@ int main(int argc, char *argv[]) {
     Sprite enemyShipRedSkin(spriteSheetTexture, 520.0f/1024.0f, 577.0f/1024.0f, 82.0f/1024.0f, 84.0f/1024.0f, 0.8);
     Sprite enemyShipBlackSkin(spriteSheetTexture, 346.0f/1024.0f, 150.0f/1024.0f, 97.0f/1024.0f, 84.0f/1024.0f, 0.8);
     
-    //Player
-    vec3 playerPos(0.0f, -6.5f);
-    vec3 playerVel(8.0f);
-    Sprite playerShipSkin(spriteSheetTexture, 224.0f/1024.0f, 832.0f/1024.0f, 99.0f/1024.0f, 75.0f/1024.0f, 1.0);
-    GamePiece playerShip(&playerShipSkin, playerPos, playerVel, 3);
-    
-    //PlayerLives
-    vec3 livesPos(7.6f, 7.65f);
-    vec3 livesVel;
-    Sprite playerLivesSkin(spriteSheetTexture, 775.0f/1024.0f, 301.0f/1024.0f, 33.0f/1024.0f, 26.0f/1024.0f, 0.5);
-    std::vector<GamePiece> lives;
-    
-    for (int i = 0; i < playerShip.lifeForce(); i++) {
-        GamePiece playerLives(&playerLivesSkin, livesPos, livesVel);
-        lives.push_back(playerLives);
-        livesPos.x -= 0.65;
-    }
-    
     std::vector<std::vector<GamePiece>> enemies;
     
-    int enemyColAmt = 11; //Amount of enemies in column
-    int enemyRowAmt = 6; //Amount of enemies in Row
+    int enemyRowAmt = 10; //Amount of enemies in Row
     
-    for (int i = 0; i < enemyColAmt; i++) {
+    for (int i = 0; i < enemyRowAmt; i++) {
         std::vector<GamePiece> enemyLine;
+        
         float originalY = enemyPos.y;
-        for (int j = 0; j < enemyRowAmt; j++) {
-            GamePiece enemyShipBlue1(&enemyShipBlueSkin1, enemyPos, enemyVel);
-            
-            enemyPos.y += 1;
-            GamePiece enemyShipBlue2(&enemyShipBlueSkin2, enemyPos, enemyVel);
-            
-            enemyPos.y += 1;
-            GamePiece enemyShipGreen(&enemyShipGreenSkin, enemyPos, enemyVel);
-            
-            enemyPos.y += 1;
-            GamePiece enemyShipBlack(&enemyShipBlackSkin, enemyPos, enemyVel);
-            
-            enemyPos.y += 1;
-            GamePiece enemyShipRed(&enemyShipRedSkin, enemyPos, enemyVel);
-            
-            enemyLine.push_back(enemyShipBlue1);
-            enemyLine.push_back(enemyShipBlue2);
-            enemyLine.push_back(enemyShipGreen);
-            enemyLine.push_back(enemyShipBlack);
-            enemyLine.push_back(enemyShipRed);
-            
-            enemyPos.y = originalY;
-        }
+        
+        GamePiece enemyShipBlue1(&enemyShipBlueSkin1, enemyPos, enemyVel);
+        
+        enemyPos.y += 1;
+        GamePiece enemyShipBlue2(&enemyShipBlueSkin2, enemyPos, enemyVel);
+        
+        enemyPos.y += 1;
+        GamePiece enemyShipGreen(&enemyShipGreenSkin, enemyPos, enemyVel);
+        
+        enemyPos.y += 1;
+        GamePiece enemyShipBlack(&enemyShipBlackSkin, enemyPos, enemyVel);
+        
+        enemyPos.y += 1;
+        GamePiece enemyShipRed(&enemyShipRedSkin, enemyPos, enemyVel);
+        
+        enemyLine.push_back(enemyShipBlue1);
+        enemyLine.push_back(enemyShipBlue2);
+        enemyLine.push_back(enemyShipGreen);
+        enemyLine.push_back(enemyShipBlack);
+        enemyLine.push_back(enemyShipRed);
+        
+        enemyPos.y = originalY;
+        
         enemyPos.x += 1;
         enemies.push_back(enemyLine);
     }
     
-    //Projectiles
-    vec3 projVel(0.0f,4.0f);
+    //-----Projectiles
+    vec3 playerProjVel(0.0f,5.0f);
+    vec3 enemyProjVel(0.0f,-5.0f);
     
-    Sprite playerProjSkin(spriteSheetTexture, 856.0f/1024.0f, 421.0f/1024.0f, 9.0f/1024.0f, 54.0f/1024.0f, 0.4);
-    GamePiece playerProj(&playerProjSkin, playerPos, projVel);
+    Sprite playerProjSkin(spriteSheetTexture, 858.0f/1024.0f, 230.0f/1024.0f, 9.0f/1024.0f, 54.0f/1024.0f, 0.9);
+    GamePiece playerProj(&playerProjSkin, zeroPos, playerProjVel, 0);
     
-    Sprite enemyProjSkin(spriteSheetTexture, 858.0f/1024.0f, 230.0f/1024.0f, 9.0f/1024.0f, 54.0f/1024.0f, 0.4);
-    GamePiece enemyProj(&enemyProjSkin, zeroPos, projVel);
+    Sprite enemyProjSkin(spriteSheetTexture, 856.0f/1024.0f, 421.0f/1024.0f, 9.0f/1024.0f, 54.0f/1024.0f, 0.4);
+    GamePiece enemyProj(&enemyProjSkin, zeroPos, enemyProjVel, 0);
     
     std::vector<GamePiece> bullets {playerProj, enemyProj};
     
-    /*
-     
-     <SubTexture name="laserBlue01.png" x="856" y="421" width="9" height="54"/>
-     <SubTexture name="laserBlue02.png" x="841" y="647" width="13" height="37"/>
-     <SubTexture name="laserBlue03.png" x="856" y="57" width="9" height="37"/>
-     <SubTexture name="laserBlue04.png" x="835" y="565" width="13" height="37"/>
-     <SubTexture name="laserBlue05.png" x="858" y="475" width="9" height="37"/>
-     <SubTexture name="laserBlue06.png" x="835" y="752" width="13" height="37"/>
-     <SubTexture name="laserBlue07.png" x="856" y="775" width="9" height="37"/>
-     <SubTexture name="laserBlue08.png" x="596" y="961" width="48" height="46"/>
-     <SubTexture name="laserBlue09.png" x="434" y="325" width="48" height="46"/>
-     <SubTexture name="laserBlue10.png" x="740" y="724" width="37" height="37"/>
-     <SubTexture name="laserBlue11.png" x="698" y="795" width="38" height="37"/>
-     <SubTexture name="laserBlue12.png" x="835" y="695" width="13" height="57"/>
-     <SubTexture name="laserBlue13.png" x="856" y="869" width="9" height="57"/>
-     <SubTexture name="laserBlue14.png" x="842" y="206" width="13" height="57"/>
-     <SubTexture name="laserBlue15.png" x="849" y="480" width="9" height="57"/>
-     <SubTexture name="laserBlue16.png" x="843" y="62" width="13" height="54"/>
-     
-     <SubTexture name="laserRed01.png" x="858" y="230" width="9" height="54"/>
-     <SubTexture name="laserRed02.png" x="843" y="977" width="13" height="37"/>
-     <SubTexture name="laserRed03.png" x="856" y="602" width="9" height="37"/>
-     <SubTexture name="laserRed04.png" x="843" y="940" width="13" height="37"/>
-     <SubTexture name="laserRed05.png" x="856" y="983" width="9" height="37"/>
-     <SubTexture name="laserRed06.png" x="843" y="903" width="13" height="37"/>
-     <SubTexture name="laserRed07.png" x="856" y="131" width="9" height="37"/>
-     <SubTexture name="laserRed08.png" x="580" y="661" width="48" height="46"/>
-     <SubTexture name="laserRed09.png" x="602" y="600" width="48" height="46"/>
-     <SubTexture name="laserRed10.png" x="738" y="650" width="37" height="36"/>
-     <SubTexture name="laserRed11.png" x="737" y="613" width="37" height="37"/>
-     <SubTexture name="laserRed12.png" x="843" y="846" width="13" height="57"/>
-     <SubTexture name="laserRed13.png" x="856" y="812" width="9" height="57"/>
-     <SubTexture name="laserRed14.png" x="843" y="789" width="13" height="57"/>
-     <SubTexture name="laserRed15.png" x="856" y="926" width="9" height="57"/>
-     <SubTexture name="laserRed16.png" x="848" y="684" width="13" height="54"/>
-     */
-    
-    
     //----------------Game Mechanics----------------//
     int score = 0;
-    bool title = true;
+    int enemyAmount = 60;
+    
+    GameMode mode = MENU;
     
     float accumulator = 0.0f;
     float lastFrameTicks = 0.0f;
+    
+    //----------------Sounds----------------//
+    Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 4096);
+    
+    Mix_Chunk* shotSound;
+    Mix_Chunk* hitSound;
+    Mix_Chunk* hurtSound;
+    Mix_Chunk* UFOSound;
+    
+    shotSound = Mix_LoadWAV("shot.wav");
+    hitSound = Mix_LoadWAV("hit.wav");
+    hurtSound = Mix_LoadWAV("hurt.wav");
+    UFOSound = Mix_LoadWAV("UFO.wav");
+    
+    std::vector<Mix_Chunk*> sounds {shotSound, hitSound, hurtSound, UFOSound};
+    
+    //----------------Music----------------//
+    Mix_Music *music;
+    
+    music = Mix_LoadMUS("Musica.mp3");
+    
+    Mix_PlayMusic(music, -1);
     
 #ifdef _WINDOWS
     glewInit();
@@ -338,27 +546,68 @@ int main(int argc, char *argv[]) {
         float elapsed = ticks - lastFrameTicks;
         lastFrameTicks = ticks;
         
-        processEvents(event, done, title);
-        
-        render(program, matricies, score, title, playerShip, lives, enemyShipUFO, bullets, enemies, printers, printerPos);
-        
-        if (!title) {
-            //Time Keeping
-            elapsed += accumulator; // get elapsed time
+        if (true) {
             
+            //Time Keeping
+            elapsed += accumulator;
             if(elapsed < FIXED_TIMESTEP) {
                 accumulator = elapsed;
                 continue;
             }
+            
+            //Ensure Proper TimeStep
             while(elapsed >= FIXED_TIMESTEP) {
-                update(FIXED_TIMESTEP, score, bounds, playerShip, bullets, enemies);
+                
+                if (originalLives != playerShip.lives) {
+                    lives.clear();
+                    
+                    for (int i = 0; i < playerShip.lives; i++) {
+                        GamePiece playerLives(&playerLivesSkin, livesPos, zeroVel);
+                        lives.push_back(playerLives);
+                        livesPos.x -= 0.65;
+                    }
+                    
+                    livesPos.x = 7.6f;
+                    
+                    originalLives = playerShip.lives;
+                }
+                
+                processEvents(event, done, score, mode, playerShip, bullets, sounds);
+                
+                //Game Mode Switch
+                switch (mode) {
+                    case MENU:
+                        renderTitle(program, matricies, printers, printerPos);
+                        break;
+                        
+                    case LEVEL:
+                        updateBoard(FIXED_TIMESTEP, score, bullets, playerShip, enemyShipUFO, enemies, enemyAmount, sounds);
+                        renderGame(program, matricies, score, bullets, playerShip, lives, enemyShipUFO, enemies, printers, printerPos);
+                        break;
+                        
+                    case GAME_OVER:
+                        renderGameOver(program, matricies, score, playerShip, printers);
+                        resetBoard(bullets, playerShip, enemyShipUFO, enemies, enemyAmount, score);
+                        break;
+                        
+                    default:
+                        break;
+                }
+                
                 elapsed -= FIXED_TIMESTEP;
             }
+            
             accumulator = elapsed;
+            
         }
-        
         SDL_GL_SwapWindow(displayWindow);
     }
     
+    //Free Space
+    Mix_FreeChunk(shotSound);
+    Mix_FreeChunk(hitSound);
+    Mix_FreeChunk(hurtSound);
+    Mix_FreeChunk(UFOSound);
+    Mix_FreeMusic(music);
     SDL_Quit();
 }

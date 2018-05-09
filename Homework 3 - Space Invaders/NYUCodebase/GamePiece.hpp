@@ -22,32 +22,18 @@ public:
     
     void draw(ShaderProgram &program, Matrix &personalMatrix) const;
     
-    bool collision(GamePiece &opp, bool harmless = false);
-    
-    bool inBounds(const vec3 &bound);
+    bool collision(GamePiece &opp);
     
     void move(float elapsed);
     
-    void shoot(bool didShoot = true);
-    
-    bool inquiryShot() const;
-    
-    void affectV(const std::string &axis, float affect);
-    
-    int lifeForce(int affectLife = 0);
-    
-    vec3 getPos() const;
-    
     void reset();
-    
-private:
-    vec3 pos, originalPos, vel, D;
     
     const Sprite* const skin;
     
-    bool shot = false;
+    vec3 pos, originalPos, vel, originalVel, D;
     
     int lives, originalLives;
+    
     bool dead = false;
 };
 
