@@ -178,51 +178,25 @@ void updateBoard(float time, int &score, std::vector<GamePiece> &bullets, GamePi
             
             if (!enemies[i][j].dead) {
                 
+                //move enemies
+                enemies[i][j].move(time);
+                
                 //Check if the enemies are within the screen bounds
                 if ((enemies[i][j].pos.x < -8 + (enemies[i][j].D.x/2)) || (enemies[i][j].pos.x > 8 - (enemies[i][j].D.x/2))) {
-                    float penetration;
                     
-                    //Find if there is another enemy that has penetrated the screen further than the one caught first and set penetration according to it
-                    for (int k = 0; k < enemies[i].size(); k++) {
-                        if (enemies[i][j].vel.x > 0) {
-                            if (enemies[i][k].pos.x + enemies[i][k].D.x/2 > enemies[i][j].pos.x + enemies[i][j].D.x/2) {
-                                j = k;
-                            }
-                        } else {
-                            if (enemies[i][k].pos.x - enemies[i][k].D.x/2 < enemies[i][j].pos.x - enemies[i][j].D.x/2) {
-                                j = k;
-                            }
-                        }
-                        
-                    }
-                    
-                    //Adjust the enemies into their positions
-                    if (enemies[i][j].vel.x > 0) {
-                        penetration = (enemies[i][j].pos.x + enemies[i][j].D.x/2) - 8;
-                    } else {
-                        penetration = -(enemies[i][j].pos.x - enemies[i][j].D.x/2) - 8;
-                    }
-                    
-                    //enemy is out of bounds shift and reverse all enemies as well as move them down and increase the vel slightly
+                    //if enemy[i][j] collided with wall want to make enemies switch velocity.
                     for (int i = 0; i < enemies.size(); i++) {
                         for (int j = 0; j < enemies[i].size(); j++) {
                             
-                            if (enemies[i][j].vel.x > 0) {
-                                enemies[i][j].pos.x -= (penetration);
-                                enemies[i][j].vel.x = -(enemies[i][j].vel.x + 0.12);
-                                
-                            } else if (enemies[i][j].vel.x < 0) {
-                                enemies[i][j].pos.x += (penetration);
-                                enemies[i][j].vel.x = -(enemies[i][j].vel.x - 0.12);
-                            }
+                            enemies[i][j].vel.x *= -1.0f;
                             
-                            enemies[i][j].pos.y = enemies[i][j].pos.y - 0.05;
-                        
+                            //make enemies move down
+                            enemies[i][j].vel.y = -5.0f;
                         }
                     }
                     
                 } else { //If enemies are in screen move them
-                    enemies[i][j].move(time);
+                    enemies[i][j].vel.y = 0.0f;
                     
                     //if the players bullet has collided with an enemy kill both and make hit sound
                     if (bullets[0].collision(enemies[i][j])) {
